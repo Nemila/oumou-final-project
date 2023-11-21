@@ -19,6 +19,7 @@ class Program
             Console.WriteLine("2. Reservation Management");
             Console.WriteLine("3. Customer Management");
             Console.WriteLine("4. Price Management");
+
             Console.Write("Enter your choice (0 - 4): ");
 
             if (int.TryParse(Console.ReadLine(), out int choice))
@@ -260,8 +261,9 @@ class Program
         Console.Clear();
         Console.WriteLine("/---------------- Price Management Menu ----------------\\\n");
         Console.WriteLine("1. Change Price For Room Type");
+        Console.WriteLine("2. Coupon Codes Report");
 
-        Console.Write("Enter your choice (1): ");
+        Console.Write("Enter your choice (1 - 2): ");
 
         if (int.TryParse(Console.ReadLine(), out int option))
         {
@@ -271,6 +273,12 @@ class Program
                     Console.Clear();
                     Console.WriteLine("/---------------- Change Price For Room Type ----------------\\\n");
                     Logic.ChangeRoomPrice();
+                    break;
+
+                case 2:
+                    Console.Clear();
+                    Console.WriteLine("/---------------- Coupon Codes Report ----------------\\\n");
+                    Logic.coupons.ForEach(c => c.Display());
                     break;
 
                 default:

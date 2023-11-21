@@ -73,6 +73,11 @@ public class Coupon
     {
         return $"{Code},{Discount}";
     }
+
+    public void Display()
+    {
+        Console.WriteLine($"Code: {Code} - Discount: -{Discount * 100}%");
+    }
 }
 
 public class CouponRedemption
