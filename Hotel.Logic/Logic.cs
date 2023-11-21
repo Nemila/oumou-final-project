@@ -9,14 +9,18 @@ public class Logic
 
     public static List<Customer> customers = new();
 
+    public static List<Coupon> coupons = new();
+
     public static List<RoomPrice> roomPrices = new();
 
-    // Methods
+    public static List<(string couponCode, Guid reservationNumber)> couponRedemption = new();
+
     public static void Init()
     {
         reservations = ReadFiles.ReadReservations();
         rooms = ReadFiles.ReadRooms();
         customers = ReadFiles.ReadCustomers();
+        coupons = ReadFiles.ReadCoupons();
         roomPrices = ReadFiles.ReadRoomPrices();
     }
 
@@ -47,6 +51,7 @@ public class Logic
 
         Guid reservationNumber = Guid.NewGuid();
 
+        // TODO: TEST IF I CAN RESERVE A ROOM THAT DOES NOT EXIT
         if (!CanReserveRoom(roomNumber, reservationDateStart, reservationDateStop))
         {
             Console.WriteLine("Room is taken on that date");
@@ -62,7 +67,28 @@ public class Logic
             customerName = Console.ReadLine()?.ToLower() ?? "";
         }
 
-        Reservation newReservation = new(reservationNumber, reservationDateStart, reservationDateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber());
+        Console.Write("Enter coupon code (leave empty if none): ");
+        string couponCode = Console.ReadLine()?.ToUpper() ?? "";
+        double value = 0;
+
+        Room currentRoom = rooms.Find(r => r.Number == roomNumber)!;
+        RoomPrice currentRoomPrice = roomPrices.Find(r => r.Type == currentRoom.Type)!;
+
+        if (coupons.Exists(c => c.Code == couponCode))
+        {
+            Coupon couponUsed = coupons.Find(c => c.Code == couponCode)!;
+            value = couponUsed.Discount * currentRoomPrice.DailyRate;
+            couponRedemption.Add((couponCode, reservationNumber));
+            coupons.Remove(couponUsed);
+            WriteFiles.WriteCouponsRedemption(new(couponUsed.Code, reservationNumber));
+            WriteFiles.WriteCoupons(coupons);
+        }
+        else
+        {
+            Console.WriteLine("No valid coupon.");
+        }
+
+        Reservation newReservation = new(reservationNumber, reservationDateStart, reservationDateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), value);
 
         Console.WriteLine("Reservation made with success");
         reservations.Add(newReservation);
@@ -104,18 +130,6 @@ public class Logic
         }
 
         return rooms.FindAll(r => CanReserveRoom(r.Number, reservationDateStart, reservationDateStop));
-
-        // DateOnly date = GetDate();
-        // List<Reservation> reservationsOnDaDate = reservations.FindAll(r => r.ReservationDateStop < date && date < r.ReservationDateStart);
-        // foreach (var reservation in reservationsOnDaDate) occupiedRoomsNumber.Add(reservation.RoomNumber);
-
-        // List<Room> freeRooms = rooms.FindAll(r => !occupiedRoomsNumber.Contains(r.Number));
-        // List<Room> occupiedRooms = rooms.FindAll(r => occupiedRoomsNumber.Contains(r.Number));
-
-        // roomsAvailability[0] = freeRooms;
-        // roomsAvailability[1] = occupiedRooms;
-
-        // return roomsAvailability;
     }
 
     public static List<Reservation> GetReservationReport()
@@ -156,10 +170,28 @@ public class Logic
             name = Console.ReadLine()?.ToLower() ?? "";
         }
 
-        Customer newCustomer = new(name, cardNumber);
+        Customer newCustomer = new(name, cardNumber, FrequentTravelerDiscount(name));
         customers.Add(newCustomer);
         WriteFiles.WriteCustomers(customers);
         return newCustomer;
+    }
+
+    public static double FrequentTravelerDiscount(string customerName)
+    {
+        if (customers.Exists(c => c.Name == customerName))
+        {
+            int customerFrequency = reservations.FindAll(r => r.CustomerName == customerName).Count;
+
+            if (customerFrequency > 3 && customerFrequency < 6) return .15;
+            if (customerFrequency > 8 && customerFrequency < 12) return .25;
+            if (customerFrequency > 12) return .50;
+            return 0;
+        }
+        else
+        {
+            Console.WriteLine("Customer not found.");
+            return 0;
+        }
     }
 
     public static void ChangeRoomPrice()
@@ -194,9 +226,9 @@ public class Logic
             name = Console.ReadLine()?.ToLower() ?? "";
         }
 
-        if (reservations.Exists(r => r.CustomerName == name))
+        if (reservations.Exists(r => r.CustomerName.ToLower() == name))
         {
-            return reservations.FindAll(r => r.CustomerName.ToLower() == name && r.ReservationDateStart < DateOnly.FromDateTime(DateTime.Now));
+            return reservations.FindAll(r => r.CustomerName.ToLower() == name && r.ReservationDateStop < DateOnly.FromDateTime(DateTime.Now));
         }
         else
         {

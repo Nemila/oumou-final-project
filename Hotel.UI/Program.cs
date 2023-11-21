@@ -159,12 +159,13 @@ class Program
     static void CustomerManagementMenu()
     {
         Console.Clear();
-        Console.WriteLine("Customer Management Menu:\n");
+        Console.WriteLine("/---------------- Customer Management Menu ----------------\\\n");
         Console.WriteLine("1. Create a Customer");
         Console.WriteLine("2. Customer Reservations Report");
         Console.WriteLine("3. Customer Prior Reservations");
+        Console.WriteLine("4. Frequent Traveler Discount");
 
-        Console.Write("Enter your choice (1 - 3): ");
+        Console.Write("Enter your choice (1 - 4): ");
         if (int.TryParse(Console.ReadLine(), out int option))
         {
             switch (option)
@@ -207,6 +208,42 @@ class Program
                     }
                     break;
 
+                case 4:
+                    Console.Clear();
+                    Console.WriteLine("/---------------- Frequent Traveler Discount ----------------\\\n");
+                    Console.Write("Enter Customer Name: ");
+                    string name = Console.ReadLine()?.ToLower() ?? "";
+
+                    while (name == "")
+                    {
+                        Console.WriteLine("Please enter a valide name: ");
+                        name = Console.ReadLine()?.ToLower() ?? "";
+                    }
+
+                    if (Logic.customers.Exists(c => c.Name == name))
+                    {
+                        Customer currentCustomer = Logic.customers.Find(c => c.Name == name)!;
+                        Room currentRoom = Logic.rooms.Find(r => r.Number == currentCustomer.RoomNumber)!;
+                        RoomPrice roomPrice = Logic.roomPrices.Find(r => r.Type == currentRoom.Type)!;
+
+                        Console.WriteLine($"Customer Name: {currentCustomer.Name.ToUpper()}");
+                        Console.WriteLine($"Room Daily Rate: {roomPrice.DailyRate}");
+                        Console.WriteLine($"Customer Room Daily Rate (discounted): ${roomPrice.DailyRate - (roomPrice.DailyRate * currentCustomer.Discount)}");
+                        if (currentCustomer.Discount > 0)
+                        {
+                            Console.WriteLine($"Customer Frequent Traveler Discount: {currentCustomer.Discount * 100}%");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Customer doesn't qualify for Frequent Traveler Discount");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Customer not found");
+                    }
+                    break;
+
                 default:
                     Console.WriteLine("Invalid choice.");
                     break;
@@ -221,7 +258,7 @@ class Program
     static void PriceManagementMenu()
     {
         Console.Clear();
-        Console.WriteLine("Price Management Menu:\n");
+        Console.WriteLine("/---------------- Price Management Menu ----------------\\\n");
         Console.WriteLine("1. Change Price For Room Type");
 
         Console.Write("Enter your choice (1): ");

@@ -10,8 +10,9 @@ public class Reservation
     public int RoomNumber { get; set; }
     public string CustomerName { get; set; }
     public string PaymentConfirmation { get; set; }
+    public double AmountPayed { get; set; }
 
-    public Reservation(Guid reservationNumber, DateOnly reservationDateStart, DateOnly reservationDateStop, int roomNumber, string customerName, string paymentConfirmation)
+    public Reservation(Guid reservationNumber, DateOnly reservationDateStart, DateOnly reservationDateStop, int roomNumber, string customerName, string paymentConfirmation, double amountPayed)
     {
         ReservationNumber = reservationNumber;
         ReservationDateStart = reservationDateStart;
@@ -19,6 +20,7 @@ public class Reservation
         RoomNumber = roomNumber;
         CustomerName = customerName;
         PaymentConfirmation = paymentConfirmation;
+        AmountPayed = amountPayed;
     }
     public override string ToString()
     {
@@ -33,6 +35,7 @@ public class Reservation
         Console.WriteLine($"- Room Number: {RoomNumber}");
         Console.WriteLine($"- Guest Name: {CustomerName.ToUpper()}");
         Console.WriteLine($"- Confirmation Code: {PaymentConfirmation}");
+        Console.WriteLine($"- Amount Paid: {AmountPayed}");
     }
 }
 
@@ -40,16 +43,52 @@ public class Customer
 {
     public string Name;
     public int RoomNumber;
+    public double Discount;
 
-    public Customer(string name, int roomNumber)
+    public Customer(string name, int roomNumber, double discount)
     {
         Name = name;
         RoomNumber = roomNumber;
+        Discount = discount;
     }
 
     public override string ToString()
     {
         return $"{RoomNumber},{Name}";
+    }
+}
+
+public class Coupon
+{
+    public string Code;
+    public double Discount;
+
+    public Coupon(string code, double discount)
+    {
+        Code = code;
+        Discount = discount;
+    }
+
+    public override string ToString()
+    {
+        return $"{Code},{Discount}";
+    }
+}
+
+public class CouponRedemption
+{
+    public string Code;
+    public Guid ReservationNumber;
+
+    public CouponRedemption(string code, Guid reservationNumber)
+    {
+        Code = code;
+        ReservationNumber = reservationNumber;
+    }
+
+    public override string ToString()
+    {
+        return $"{Code},{ReservationNumber}";
     }
 }
 

@@ -12,6 +12,21 @@ public static class WriteFiles
         File.WriteAllLines(FindFile("Customer.txt"), lines);
     }
 
+    public static void WriteCoupons(List<Coupon> coupons)
+    {
+        List<string> lines = new();
+        foreach (var item in coupons)
+        {
+            lines.Add(item.ToString());
+        }
+        File.WriteAllLines(FindFile("Coupons.txt"), lines);
+    }
+
+    public static void WriteCouponsRedemption(CouponRedemption coupon)
+    {
+        File.AppendAllText(FindFile("CouponsRedemption.txt"), $"{coupon}{Environment.NewLine}");
+    }
+
     public static void WriteRoomPrices(List<RoomPrice> roomPrices)
     {
         List<string> lines = new();
