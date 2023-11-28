@@ -39,62 +39,70 @@ public class Logic
 
     public static bool MakeReservation()
     {
-        int roomNumber = GetInt("Enter Room Number: ");
-        DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
-        DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
-
-        while (!(reservationDateStart <= reservationDateStop))
+        try
         {
-            reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
-            reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
+            int roomNumber = GetInt("Enter Room Number: ");
+            DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
+            DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
+
+            while (!(reservationDateStart <= reservationDateStop))
+            {
+                reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
+                reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
+            }
+
+            Guid reservationNumber = Guid.NewGuid();
+
+            // TODO: TEST IF I CAN RESERVE A ROOM THAT DOES NOT EXIT
+            if (!CanReserveRoom(roomNumber, reservationDateStart, reservationDateStop))
+            {
+                Console.WriteLine("Room is taken on that date.");
+                return false;
+            }
+
+            Console.Write("Enter Customer Name: ");
+            string customerName = Console.ReadLine()?.ToLower() ?? "";
+
+            while (customerName == "")
+            {
+                Console.WriteLine("Enter a Valid Customer Name: ");
+                customerName = Console.ReadLine()?.ToLower() ?? "";
+            }
+
+            Console.Write("Enter coupon code (leave empty if none): ");
+            string couponCode = Console.ReadLine()?.ToUpper() ?? "";
+            double value = 0;
+
+            Room currentRoom = rooms.Find(r => r.Number == roomNumber)!;
+            RoomPrice currentRoomPrice = roomPrices.Find(r => r.Type == currentRoom.Type)!;
+
+            if (coupons.Exists(c => c.Code == couponCode))
+            {
+                Coupon couponUsed = coupons.Find(c => c.Code == couponCode)!;
+                value = couponUsed.Discount * currentRoomPrice.DailyRate;
+                couponRedemption.Add((couponCode, reservationNumber));
+                coupons.Remove(couponUsed);
+                WriteFiles.WriteCouponsRedemption(new(couponUsed.Code, reservationNumber));
+                WriteFiles.WriteCoupons(coupons);
+            }
+            else
+            {
+                Console.WriteLine("No valid coupon.");
+            }
+
+            Reservation newReservation = new(reservationNumber, reservationDateStart, reservationDateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), value);
+
+            Console.WriteLine("Reservation made with success");
+            reservations.Add(newReservation);
+            WriteFiles.WriteReservations(reservations);
+
+            return true;
         }
-
-        Guid reservationNumber = Guid.NewGuid();
-
-        // TODO: TEST IF I CAN RESERVE A ROOM THAT DOES NOT EXIT
-        if (!CanReserveRoom(roomNumber, reservationDateStart, reservationDateStop))
+        catch
         {
-            Console.WriteLine("Room is taken on that date");
+            Console.WriteLine("Something went wrong");
             return false;
         }
-
-        Console.Write("Enter Customer Name: ");
-        string customerName = Console.ReadLine()?.ToLower() ?? "";
-
-        while (customerName == "")
-        {
-            Console.WriteLine("Enter a Valid Customer Name: ");
-            customerName = Console.ReadLine()?.ToLower() ?? "";
-        }
-
-        Console.Write("Enter coupon code (leave empty if none): ");
-        string couponCode = Console.ReadLine()?.ToUpper() ?? "";
-        double value = 0;
-
-        Room currentRoom = rooms.Find(r => r.Number == roomNumber)!;
-        RoomPrice currentRoomPrice = roomPrices.Find(r => r.Type == currentRoom.Type)!;
-
-        if (coupons.Exists(c => c.Code == couponCode))
-        {
-            Coupon couponUsed = coupons.Find(c => c.Code == couponCode)!;
-            value = couponUsed.Discount * currentRoomPrice.DailyRate;
-            couponRedemption.Add((couponCode, reservationNumber));
-            coupons.Remove(couponUsed);
-            WriteFiles.WriteCouponsRedemption(new(couponUsed.Code, reservationNumber));
-            WriteFiles.WriteCoupons(coupons);
-        }
-        else
-        {
-            Console.WriteLine("No valid coupon.");
-        }
-
-        Reservation newReservation = new(reservationNumber, reservationDateStart, reservationDateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), value);
-
-        Console.WriteLine("Reservation made with success");
-        reservations.Add(newReservation);
-        WriteFiles.WriteReservations(reservations);
-
-        return true;
     }
 
     public static Room MakeRoom()
@@ -248,7 +256,7 @@ public class Logic
 
         if (reservations.Exists(r => r.ReservationNumber == reservationNumber))
         {
-            Reservation deletedReservation = reservations.Find(r => r.ReservationNumber == reservationNumber);
+            Reservation deletedReservation = reservations.Find(r => r.ReservationNumber == reservationNumber)!;
 
             reservations.RemoveAt(reservations.FindIndex(r => r.ReservationNumber == reservationNumber));
 

@@ -228,7 +228,7 @@ class Program
                         RoomPrice roomPrice = Logic.roomPrices.Find(r => r.Type == currentRoom.Type)!;
 
                         Console.WriteLine($"Customer Name: {currentCustomer.Name.ToUpper()}");
-                        Console.WriteLine($"Room Daily Rate: {roomPrice.DailyRate}");
+                        Console.WriteLine($"Room Daily Rate: ${roomPrice.DailyRate}");
                         Console.WriteLine($"Customer Room Daily Rate (discounted): ${roomPrice.DailyRate - (roomPrice.DailyRate * currentCustomer.Discount)}");
                         if (currentCustomer.Discount > 0)
                         {
