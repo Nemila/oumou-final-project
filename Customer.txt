@@ -4,6 +4,6 @@
 110,oumarou sidibe,0
 111,james smith,0
 112,william smith,0
-120,elon musk,.15
+120,elon musk,0
 121,pharel williams,0
 122,michel jordan,0

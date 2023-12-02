@@ -24,7 +24,7 @@ public class Reservation
     }
     public override string ToString()
     {
-        return $"{ReservationNumber},{ReservationDateStart},{ReservationDateStop},{RoomNumber},{CustomerName},{PaymentConfirmation}";
+        return $"{ReservationNumber},{ReservationDateStart},{ReservationDateStop},{RoomNumber},{CustomerName},{PaymentConfirmation},{AmountPayed}";
     }
     public void Display()
     {

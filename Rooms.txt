@@ -8,3 +8,4 @@
 121,Suite
 122,Suite
 123,Suite
+650,Double

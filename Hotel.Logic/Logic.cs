@@ -3,308 +3,134 @@ namespace Hotel.Logic;
 
 public class Logic
 {
-    public static List<Reservation> reservations = new();
-
-    public static List<Room> rooms = new();
-
-    public static List<Customer> customers = new();
-
-    public static List<Coupon> coupons = new();
-
-    public static List<RoomPrice> roomPrices = new();
-
-    public static List<(string couponCode, Guid reservationNumber)> couponRedemption = new();
-
-    public static void Init()
-    {
-        reservations = ReadFiles.ReadReservations();
-        rooms = ReadFiles.ReadRooms();
-        customers = ReadFiles.ReadCustomers();
-        coupons = ReadFiles.ReadCoupons();
-        roomPrices = ReadFiles.ReadRoomPrices();
-    }
+    //public static List<Reservation> reservations = ReadFiles.ReadReservations();
+    //public static List<Room> rooms = ReadFiles.ReadRooms();
+    //public static List<Customer> customers = ReadFiles.ReadCustomers();
+    //public static List<Coupon> coupons = ReadFiles.ReadCoupons();
+    //public static List<RoomPrice> roomPrices = ReadFiles.ReadRoomPrices();
+    //public static List<(string couponCode, Guid reservationNumber)> couponRedemption = new();
 
     public static bool CanReserveRoom(int roomNum, DateOnly startDate, DateOnly endDate)
     {
-        foreach (var r in reservations)
+        try
         {
-            bool IsStartDateInvalid = startDate >= r.ReservationDateStart && r.ReservationDateStop >= startDate;
-            bool IsStopDateInvalid = endDate >= r.ReservationDateStart && r.ReservationDateStop >= endDate;
-            bool IsDateInvalid = (r.ReservationDateStart >= startDate && r.ReservationDateStop <= endDate) || IsStartDateInvalid || IsStopDateInvalid;
-            if (r.RoomNumber == roomNum && IsDateInvalid) return false;
-        }
+            if (!FileData.rooms.Exists(r => r.Number == roomNum)) return false;
 
-        return true;
+            foreach (var r in FileData.reservations)
+            {
+                bool IsStartDateInvalid = startDate >= r.ReservationDateStart && r.ReservationDateStop >= startDate;
+                bool IsStopDateInvalid = endDate >= r.ReservationDateStart && r.ReservationDateStop >= endDate;
+                bool IsDateInvalid = (r.ReservationDateStart >= startDate && r.ReservationDateStop <= endDate) || IsStartDateInvalid || IsStopDateInvalid;
+                if (r.RoomNumber == roomNum && IsDateInvalid) return false;
+            }
+
+            return true;
+        } catch { return false; }
     }
-
-    public static bool MakeReservation()
+    
+    public static bool TestableMakeReservation(int roomNumber, DateOnly dateStart, DateOnly dateStop, string customerName)
     {
         try
         {
-            int roomNumber = GetInt("Enter Room Number: ");
-            DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
-            DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
+            Guid resNumber = Guid.NewGuid();
+            
+            if (!(dateStart <= dateStop)) return false;
+            if (!CanReserveRoom(roomNumber, dateStart, dateStop)) return false;
 
-            while (!(reservationDateStart <= reservationDateStop))
-            {
-                reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
-                reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
-            }
+            Room currentRoom = FileData.rooms.Find(r => r.Number == roomNumber)!;
+            RoomPrice currentRoomPrice = FileData.roomPrices.Find(r => r.Type == currentRoom.Type)!;
 
-            Guid reservationNumber = Guid.NewGuid();
-
-            // TODO: TEST IF I CAN RESERVE A ROOM THAT DOES NOT EXIT
-            if (!CanReserveRoom(roomNumber, reservationDateStart, reservationDateStop))
-            {
-                Console.WriteLine("Room is taken on that date.");
-                return false;
-            }
-
-            Console.Write("Enter Customer Name: ");
-            string customerName = Console.ReadLine()?.ToLower() ?? "";
-
-            while (customerName == "")
-            {
-                Console.WriteLine("Enter a Valid Customer Name: ");
-                customerName = Console.ReadLine()?.ToLower() ?? "";
-            }
-
-            Console.Write("Enter coupon code (leave empty if none): ");
-            string couponCode = Console.ReadLine()?.ToUpper() ?? "";
-            double value = 0;
-
-            Room currentRoom = rooms.Find(r => r.Number == roomNumber)!;
-            RoomPrice currentRoomPrice = roomPrices.Find(r => r.Type == currentRoom.Type)!;
-
-            if (coupons.Exists(c => c.Code == couponCode))
-            {
-                Coupon couponUsed = coupons.Find(c => c.Code == couponCode)!;
-                value = couponUsed.Discount * currentRoomPrice.DailyRate;
-                couponRedemption.Add((couponCode, reservationNumber));
-                coupons.Remove(couponUsed);
-                WriteFiles.WriteCouponsRedemption(new(couponUsed.Code, reservationNumber));
-                WriteFiles.WriteCoupons(coupons);
-            }
-            else
-            {
-                Console.WriteLine("No valid coupon.");
-            }
-
-            Reservation newReservation = new(reservationNumber, reservationDateStart, reservationDateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), value);
-
-            Console.WriteLine("Reservation made with success");
-            reservations.Add(newReservation);
-            WriteFiles.WriteReservations(reservations);
-
+            Reservation newReservation = new(resNumber, dateStart, dateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), 0);
+            FileData.reservations.Add(newReservation);
             return true;
         }
-        catch
+        catch { return false; }
+    }
+
+    public static bool TestableDeleteReservation(Guid reservationNumber)
+    {
+        try
         {
-            Console.WriteLine("Something went wrong");
+            if (!FileData.reservations.Exists(r => r.ReservationNumber == reservationNumber)) return false;
+            Reservation toDelete = FileData.reservations.Find(r => r.ReservationNumber == reservationNumber)!;
+            FileData.reservations.Remove(toDelete);
+            return true;
+        }
+        catch { return false; }
+    }
+
+    public static bool TestableMakeRoom(int roomNumber, RoomType roomType)
+    {
+        if (FileData.rooms.Exists(r => r.Number == roomNumber)) return false;
+        Room newRoom = new(roomNumber, roomType);
+        FileData.rooms.Add(newRoom);
+        return true;
+    }
+
+    public static bool TestableCreateCustomer(string name, int cardNumber)
+    {
+        try {
+            if (FileData.customers.Exists(c => c.Name == name)) return false;
+            Customer newCustomer = new(name, cardNumber, FrequentTravelerDiscount(name));
+            FileData.customers.Add(newCustomer);
+            return true;
+        } catch
+        {
             return false;
         }
     }
 
-    public static Room MakeRoom()
+    public static bool TestableDeleteCustomer(string name, int cardNumber)
     {
-        int roomNumber = GetInt("Enter the room's number: ");
-        while (rooms.Exists(r => r.Number == roomNumber))
+        try
         {
-            roomNumber = GetInt("Room already exists. Enter a different room number: ");
+            if (!FileData.customers.Exists(c => c.Name == name)) return false;
+            Customer customer = FileData.customers.Find(c => c.Name == name && c.RoomNumber == cardNumber)!;
+            FileData.customers.Add(customer);
+            return true;
         }
-
-        Console.Write("Select Room Type (1. Single, 2. Double, 3. Suite): ");
-        RoomType roomType;
-        while (!Enum.TryParse(Console.ReadLine(), true, out roomType))
+        catch
         {
-            Console.Write("Select Room Type (1. Single, 2. Double, 3. Suite): ");
+            return false;
         }
-
-        Room newRoom = new(roomNumber, roomType);
-        rooms.Add(newRoom);
-        WriteFiles.WriteRooms(rooms);
-        return newRoom;
-    }
-
-    public static List<Room> GetAvailableRoomsByDate()
-    {
-        DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
-        DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
-
-        while (!(reservationDateStart <= reservationDateStop))
-        {
-            reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
-            reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
-        }
-
-        return rooms.FindAll(r => CanReserveRoom(r.Number, reservationDateStart, reservationDateStop));
-    }
-
-    public static List<Reservation> GetReservationReport()
-    {
-        DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
-        return reservations.FindAll(r => reservationDateStart < r.ReservationDateStart && reservationDateStart > r.ReservationDateStop);
-    }
-
-    public static List<Reservation> GetCustomerReservationReport()
-    {
-        Console.Write("Enter Customer Name: ");
-        string name = Console.ReadLine()?.ToLower() ?? "";
-        while (name == "")
-        {
-            Console.Write("Please enter a valide name: ");
-            name = Console.ReadLine()?.ToLower() ?? "";
-        }
-
-        if (reservations.Exists(r => r.CustomerName == name))
-        {
-            return reservations.FindAll(r => r.CustomerName.ToLower() == name && r.ReservationDateStart > DateOnly.FromDateTime(DateTime.Now));
-        }
-        else
-        {
-            return new List<Reservation>();
-        }
-    }
-
-    public static Customer CreateCustomer()
-    {
-        Console.Write("Enter Customer Name: ");
-        string name = Console.ReadLine()?.ToLower() ?? "";
-        int cardNumber = GetInt("Enter Customer Card Number: ");
-
-        while (name == "")
-        {
-            Console.WriteLine("Please enter a valide name: ");
-            name = Console.ReadLine()?.ToLower() ?? "";
-        }
-
-        Customer newCustomer = new(name, cardNumber, FrequentTravelerDiscount(name));
-        customers.Add(newCustomer);
-        WriteFiles.WriteCustomers(customers);
-        return newCustomer;
     }
 
     public static double FrequentTravelerDiscount(string customerName)
     {
-        if (customers.Exists(c => c.Name == customerName))
-        {
-            int customerFrequency = reservations.FindAll(r => r.CustomerName == customerName).Count;
+        if (!FileData.customers.Exists(c => c.Name == customerName)) return 0;
 
-            if (customerFrequency > 3 && customerFrequency < 6) return .15;
-            if (customerFrequency > 8 && customerFrequency < 12) return .25;
-            if (customerFrequency > 12) return .50;
-            return 0;
-        }
-        else
-        {
-            Console.WriteLine("Customer not found.");
-            return 0;
+        int customerFrequency = FileData.reservations.FindAll(r => r.CustomerName == customerName).Count;
+
+        if (customerFrequency > 3 && customerFrequency < 6) return .15;
+        if (customerFrequency > 8 && customerFrequency < 12) return .25;
+        if (customerFrequency > 12) return .50;
+        return 0;
+    }
+
+    public static bool TestableChangeRoomPrice(RoomType type, double dailyRate)
+    {
+        try {
+            if (dailyRate < 0) { return false; }
+            if (!FileData.roomPrices.Exists(r => r.Type == type)) { return false; }
+            
+            RoomPrice current = FileData.roomPrices.Find(r => r.Type == type)!;
+            current.DailyRate = dailyRate;
+            
+            return true;
+        } catch { 
+            return false; 
         }
     }
 
-    public static void ChangeRoomPrice()
+    public static Reservation? TestableRefundReservation(Guid reservationNumber)
     {
-        Console.Write("Select Room Type (1. Single, 2. Double, 3. Suite): ");
-        RoomType roomType;
-        while (!Enum.TryParse(Console.ReadLine(), true, out roomType))
+        try
         {
-            Console.Write("Select Valid Room Type (1. Single, 2. Double, 3. Suite): ");
-        }
-
-        if (roomPrices.Exists(r => r.Type == roomType))
-        {
-            RoomPrice selectedRoomPrice = roomPrices.Find(r => r.Type == roomType)!;
-            selectedRoomPrice.DailyRate = GetInt("Enter Room Daily Rate: ");
-            WriteFiles.WriteRoomPrices(roomPrices);
-        }
-        else
-        {
-            Console.WriteLine("Room Type Not Available");
-        }
-    }
-
-    public static List<Reservation> GetCustomerPriorReservation()
-    {
-        Console.Write("Enter Customer Name: ");
-        string name = Console.ReadLine()?.ToLower() ?? "";
-
-        while (name == "")
-        {
-            Console.Write("Please enter a valide name: ");
-            name = Console.ReadLine()?.ToLower() ?? "";
-        }
-
-        if (reservations.Exists(r => r.CustomerName.ToLower() == name))
-        {
-            return reservations.FindAll(r => r.CustomerName.ToLower() == name && r.ReservationDateStop < DateOnly.FromDateTime(DateTime.Now));
-        }
-        else
-        {
-            Console.WriteLine("Customer Not Found");
-            return new List<Reservation>();
-        }
-    }
-
-    public static void RefundReservation()
-    {
-        Console.Write("Enter Reservation Number: ");
-        Guid reservationNumber;
-        while (!Guid.TryParse(Console.ReadLine(), out reservationNumber))
-        {
-            Console.Write("Enter Valid Reservation Number: ");
-        }
-
-        if (reservations.Exists(r => r.ReservationNumber == reservationNumber))
-        {
-            Reservation deletedReservation = reservations.Find(r => r.ReservationNumber == reservationNumber)!;
-
-            reservations.RemoveAt(reservations.FindIndex(r => r.ReservationNumber == reservationNumber));
-
-            WriteFiles.WriteRefund(deletedReservation);
-            WriteFiles.WriteReservations(reservations);
-        }
-        else
-        {
-            Console.Write("Reservation was not found.");
-        }
-    }
-
-    public static int GetInt(string message)
-    {
-        Console.Write(message);
-        string? response = Console.ReadLine();
-        int result;
-
-        while (!int.TryParse(response, out result))
-        {
-            Console.Write("Please enter a valid number: ");
-            response = Console.ReadLine();
-        }
-
-        return result;
-    }
-
-    static DateOnly GetDate(string message = "Enter a date (mm/dd/yyyy): ")
-    {
-        while (true)
-        {
-            try
-            {
-                Console.Write(message);
-                string dateString = Console.ReadLine() ?? "";
-                string[] dateArray = dateString.Split("/");
-
-                int month = Convert.ToInt32(dateArray[0]);
-                int date = Convert.ToInt32(dateArray[1]);
-                int year = Convert.ToInt32(dateArray[2]);
-
-                return new DateOnly(year, month, date);
-            }
-            catch
-            {
-                Console.Write("Invalid date, please enter a valid date (mm/dd/yyyy): ");
-            }
-        }
+            if (!FileData.reservations.Exists(r => r.ReservationNumber == reservationNumber)) return null;
+            Reservation deletedReservation = FileData.reservations.Find(r => r.ReservationNumber == reservationNumber)!;
+            FileData.reservations.RemoveAt(FileData.reservations.FindIndex(r => r.ReservationNumber == reservationNumber));
+            return deletedReservation;
+        } catch { return null; }
     }
 
     static string GeneratePaymentConfirmationNumber()
