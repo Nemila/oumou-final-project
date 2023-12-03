@@ -77,18 +77,14 @@ class Program
                 case 1:
                     Console.Clear();
                     Console.WriteLine("/---------------- Adding a new room ----------------\\\n");
-                    
+
                     try
                     {
                         int roomNumber = GetInt("Enter the room's number: ");
 
-                        while (FileData.rooms.Exists(r => r.Number == roomNumber))
-                        {
-                            roomNumber = GetInt("Room already exists. Enter a different room number: ");
-                        }
-
                         Console.Write("Select Room Type (1. Single, 2. Double, 3. Suite): ");
                         RoomType roomType;
+
                         while (!Enum.TryParse(Console.ReadLine(), true, out roomType))
                         {
                             Console.Write("Select Room Type (1. Single, 2. Double, 3. Suite): ");
@@ -98,12 +94,13 @@ class Program
                         {
                             Console.WriteLine("Room created with success");
                             WriteFiles.WriteRooms();
-                        } else
+                        }
+                        else
                         {
-                            Console.WriteLine("Something went wrong");
+                            Console.WriteLine("Room couldn't be created. Please make sure the room doesn't already exist and the room type is correct.");
                         }
                     }
-                    catch { Console.WriteLine("Something went wrong"); }
+                    catch { Console.WriteLine("Something went wrong, please try gain."); }
                     break;
 
                 case 2:
@@ -116,24 +113,31 @@ class Program
                     Console.Clear();
                     Console.WriteLine("/---------------- Available Room Search ----------------\\\n");
 
-                    DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
-                    DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
-
-                    while (!(reservationDateStart <= reservationDateStop))
+                    try
                     {
-                        reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
-                        reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
+                        DateOnly reservationDateStart = GetDate("Enter a start date (mm/dd/yyyy): ");
+                        DateOnly reservationDateStop = GetDate("Enter a stop date (mm/dd/yyyy): ");
+
+                        while (!(reservationDateStart <= reservationDateStop))
+                        {
+                            reservationDateStart = GetDate("Enter a valid start date (mm/dd/yyyy): ");
+                            reservationDateStop = GetDate("Enter a valid stop date (mm/dd/yyyy): ");
+                        }
+
+                        List<Room> roomsAvailability = FileData.rooms.FindAll(r => Logic.CanReserveRoom(r.Number, reservationDateStart, reservationDateStop));
+
+                        if (roomsAvailability.Count <= 0)
+                        {
+                            Console.WriteLine("No available rooms for that date.");
+                        }
+                        else
+                        {
+                            roomsAvailability.ForEach(r => r.Display());
+                        }
                     }
-
-                    List<Room> roomsAvailability = FileData.rooms.FindAll(r => Logic.CanReserveRoom(r.Number, reservationDateStart, reservationDateStop));
-
-                    if (roomsAvailability.Count <= 0)
+                    catch
                     {
-                        Console.WriteLine("No available rooms for that date.");
-                    }
-                    else
-                    {
-                        roomsAvailability.ForEach(r => r.Display());
+                        Console.WriteLine("Something went wrong, please try again.");
                     }
                     break;
 
@@ -165,7 +169,7 @@ class Program
                 case 1:
                     Console.Clear();
                     Console.WriteLine("/---------------- Make a Reservation ----------------\\\n");
-                    
+
                     try
                     {
                         int roomNumber = GetInt("Enter Room Number: ");
@@ -193,14 +197,15 @@ class Program
                         {
                             Console.WriteLine("Reservation made with success");
                             WriteFiles.WriteReservations();
-                        } else
+                        }
+                        else
                         {
-                            Console.WriteLine("Something went wrong");
+                            Console.WriteLine("Could not make the reservation. Please make sure you entered a valid date (not already taken) and a valid room number.");
                         }
                     }
                     catch
                     {
-                        Console.WriteLine("Something went wrong");
+                        Console.WriteLine("Something went wrong, please try again.");
                     }
                     break;
 
@@ -214,7 +219,7 @@ class Program
 
                         Guid reservationNumber;
 
-                        while(!Guid.TryParse(Console.ReadLine(), out reservationNumber))
+                        while (!Guid.TryParse(Console.ReadLine(), out reservationNumber))
                         {
                             Console.Write("Enter Reservation Number: ");
                         }
@@ -227,12 +232,12 @@ class Program
                         }
                         else
                         {
-                            Console.WriteLine("Something went wrong");
+                            Console.WriteLine("Reservation not deleted, please make sure you entered a valid reservation number.");
                         }
                     }
                     catch
                     {
-                        Console.WriteLine("Something went wrong");
+                        Console.WriteLine("Something went wrong, please try again.");
                     }
 
                     break;
@@ -258,19 +263,21 @@ class Program
                         }
 
                         var deleted = Logic.TestableRefundReservation(reservationNumber);
-                        
-                        if (deleted != null){
+
+                        if (deleted != null)
+                        {
                             Console.WriteLine("Refunded with success");
                             WriteFiles.WriteRefund(deleted);
                             WriteFiles.WriteReservations();
-                        } else
+                        }
+                        else
                         {
-                            Console.WriteLine("Something went wrong");
+                            Console.WriteLine("Refund failed, please make sure reservation number is correct.");
                         }
                     }
                     catch
                     {
-                        Console.Write("Something went wrong");
+                        Console.Write("Something went wrong, please try again.");
                     }
                     break;
 
@@ -314,18 +321,20 @@ class Program
                             Console.WriteLine("Please enter a valide name: ");
                             newCustomerName = Console.ReadLine()?.ToLower() ?? "";
                         }
-                        
+
                         if (Logic.TestableCreateCustomer(newCustomerName, cardNumber))
                         {
                             Console.WriteLine("Customer Added With Success");
                             WriteFiles.WriteCustomers();
-                        } else
-                        {
-                            Console.WriteLine("Something went wrong");
                         }
-                    } catch
+                        else
+                        {
+                            Console.WriteLine("Customer not added, please make sure the customer doesn't already exist and the card number is valid.");
+                        }
+                    }
+                    catch
                     {
-                        Console.WriteLine("Something went wrong");
+                        Console.WriteLine("Something went wrong, please try again.");
                     }
                     break;
 
@@ -351,12 +360,12 @@ class Program
                         }
                         else
                         {
-                            Console.WriteLine("Something went wrong");
+                            Console.WriteLine("Customer couldn't be deleted, please make sure the name and card number are valid.");
                         }
                     }
                     catch
                     {
-                        Console.WriteLine("Something went wrong");
+                        Console.WriteLine("Something went wrong, please try again.");
                     }
                     break;
 
@@ -391,7 +400,6 @@ class Program
                         Console.WriteLine("Customer not found.");
                     }
 
-                    
                     break;
 
                 case 4:
@@ -412,7 +420,7 @@ class Program
                     if (FileData.reservations.Exists(r => r.CustomerName.ToLower() == customerName))
                     {
                         customerPriorReservations = FileData.reservations.FindAll(r => r.CustomerName.ToLower() == customerName && r.ReservationDateStop < DateOnly.FromDateTime(DateTime.Now));
-                        
+
                         if (customerPriorReservations.Count <= 0)
                         {
                             Console.WriteLine("No reservations for that customer.");
@@ -481,9 +489,8 @@ class Program
         Console.WriteLine("/---------------- Price Management Menu ----------------\\\n");
         Console.WriteLine("1. Change Price For Room Type");
         Console.WriteLine("2. Coupon Codes Report");
-        Console.WriteLine("3. Make a payment");
 
-        Console.Write("Enter your choice (1 - 3): ");
+        Console.Write("Enter your choice (1 - 2): ");
 
         if (int.TryParse(Console.ReadLine(), out int option))
         {
@@ -525,64 +532,6 @@ class Program
                     Console.WriteLine("/---------------- Coupon Codes Report ----------------\\\n");
                     FileData.coupons.ForEach(c => c.Display());
                     break;
-
-                case 3:
-                    Console.Clear();
-                    Console.WriteLine("/---------------- Apply Coupon Code ----------------\\\n");
-                    
-                    try
-                    {
-                        Guid reservationNumber;
-
-                        while (!Guid.TryParse(Console.ReadLine(), out reservationNumber))
-                        {
-                            Console.Write("Enter Reservation Number: ");
-                        }
-
-                        if (FileData.reservations.Exists(r => r.ReservationNumber == reservationNumber))
-                        {
-                            Console.Write("Enter Coupon Code: ");
-                            string input = Console.ReadLine() ?? "";
-
-                            if (FileData.coupons.Exists(c => c.Code == input.ToUpper()))
-                            {
-                                Reservation reservation = FileData.reservations.Find(r => r.ReservationNumber == reservationNumber)!;
-                                Coupon coupon = FileData.coupons.Find(c => c.Code == input.ToUpper())!;
-                                Customer customer = FileData.customers.Find(c => c.Name == reservation.CustomerName)!;
-                                CouponRedemption redemptionCoupon = new CouponRedemption(coupon.Code, reservation.ReservationNumber);
-                                WriteFiles.WriteCouponsRedemption(redemptionCoupon);
-                                customer.Discount += coupon.Discount;
-                                FileData.coupons.Remove(coupon);
-                                WriteFiles.WriteCoupons();
-                            } else
-                            {
-                                Console.WriteLine("Invalid Coupon");
-                            }
-                        }
-
-
-                        if (FileData.reservations.Exists(r => r.ReservationNumber == reservationNumber))
-                        {
-                            Reservation reservation = FileData.reservations.Find(r => r.ReservationNumber == reservationNumber)!;
-                            Customer customer = FileData.customers.Find(c => c.Name == reservation.CustomerName)!;
-                            Room room = FileData.rooms.Find(r => r.Number == reservation.RoomNumber)!;
-                            RoomPrice roomPrice = FileData.roomPrices.Find(r => r.Type == room.Type)!;
-
-                            double toPay = roomPrice.DailyRate - (roomPrice.DailyRate * customer.Discount);
-
-                        }
-                        
-                    }
-                    catch
-                    {
-                        Console.WriteLine("Something went wrong");
-                    }
-
-                    break;
-
-                default:
-                    Console.WriteLine("Invalid choice.");
-                    break;
             }
         }
         else
@@ -614,18 +563,16 @@ class Program
         }
     }
 
-    
-    
+
+
     public static int GetInt(string message)
     {
         Console.Write(message);
-        string? response = Console.ReadLine();
         int result;
 
-        while (!int.TryParse(response, out result))
+        while (!int.TryParse(Console.ReadLine(), out result))
         {
             Console.Write("Please enter a valid number: ");
-            response = Console.ReadLine();
         }
 
         return result;

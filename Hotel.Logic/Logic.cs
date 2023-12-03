@@ -25,22 +25,23 @@ public class Logic
             }
 
             return true;
-        } catch { return false; }
+        }
+        catch { return false; }
     }
-    
+
     public static bool TestableMakeReservation(int roomNumber, DateOnly dateStart, DateOnly dateStop, string customerName)
     {
         try
         {
             Guid resNumber = Guid.NewGuid();
-            
+
             if (!(dateStart <= dateStop)) return false;
             if (!CanReserveRoom(roomNumber, dateStart, dateStop)) return false;
 
             Room currentRoom = FileData.rooms.Find(r => r.Number == roomNumber)!;
             RoomPrice currentRoomPrice = FileData.roomPrices.Find(r => r.Type == currentRoom.Type)!;
 
-            Reservation newReservation = new(resNumber, dateStart, dateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber(), 0);
+            Reservation newReservation = new(resNumber, dateStart, dateStop, roomNumber, customerName, GeneratePaymentConfirmationNumber());
             FileData.reservations.Add(newReservation);
             return true;
         }
@@ -62,19 +63,21 @@ public class Logic
     public static bool TestableMakeRoom(int roomNumber, RoomType roomType)
     {
         if (FileData.rooms.Exists(r => r.Number == roomNumber)) return false;
-        Room newRoom = new(roomNumber, roomType);
+        Room newRoom = new Room(roomNumber, roomType);
         FileData.rooms.Add(newRoom);
         return true;
     }
 
     public static bool TestableCreateCustomer(string name, int cardNumber)
     {
-        try {
+        try
+        {
             if (FileData.customers.Exists(c => c.Name == name)) return false;
             Customer newCustomer = new(name, cardNumber, FrequentTravelerDiscount(name));
             FileData.customers.Add(newCustomer);
             return true;
-        } catch
+        }
+        catch
         {
             return false;
         }
@@ -109,16 +112,19 @@ public class Logic
 
     public static bool TestableChangeRoomPrice(RoomType type, double dailyRate)
     {
-        try {
+        try
+        {
             if (dailyRate < 0) { return false; }
             if (!FileData.roomPrices.Exists(r => r.Type == type)) { return false; }
-            
+
             RoomPrice current = FileData.roomPrices.Find(r => r.Type == type)!;
             current.DailyRate = dailyRate;
-            
+
             return true;
-        } catch { 
-            return false; 
+        }
+        catch
+        {
+            return false;
         }
     }
 
@@ -130,7 +136,8 @@ public class Logic
             Reservation deletedReservation = FileData.reservations.Find(r => r.ReservationNumber == reservationNumber)!;
             FileData.reservations.RemoveAt(FileData.reservations.FindIndex(r => r.ReservationNumber == reservationNumber));
             return deletedReservation;
-        } catch { return null; }
+        }
+        catch { return null; }
     }
 
     static string GeneratePaymentConfirmationNumber()

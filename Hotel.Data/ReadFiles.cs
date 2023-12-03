@@ -93,13 +93,12 @@ public static class ReadFiles
                 int roomNumber = Convert.ToInt32(line.Split(",")[3]);
                 string customerName = line.Split(",")[4];
                 string paymentConfirmation = line.Split(",")[5];
-                double amountPayed = Convert.ToDouble(line.Split(",")[6]);
 
                 _ = DateOnly.TryParse(dateStartString, out DateOnly reservationDateStart);
                 _ = DateOnly.TryParse(dateStopString, out DateOnly reservationDateStop);
                 _ = Guid.TryParse(reservationNumber, out Guid formattedGuid);
 
-                Reservation newReservation = new(formattedGuid, reservationDateStart, reservationDateStop, roomNumber, customerName, paymentConfirmation, amountPayed);
+                Reservation newReservation = new(formattedGuid, reservationDateStart, reservationDateStop, roomNumber, customerName, paymentConfirmation);
 
                 reservations.Add(newReservation);
             }

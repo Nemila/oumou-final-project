@@ -10,9 +10,8 @@ public class Reservation
     public int RoomNumber { get; set; }
     public string CustomerName { get; set; }
     public string PaymentConfirmation { get; set; }
-    public double AmountPayed { get; set; }
 
-    public Reservation(Guid reservationNumber, DateOnly reservationDateStart, DateOnly reservationDateStop, int roomNumber, string customerName, string paymentConfirmation, double amountPayed)
+    public Reservation(Guid reservationNumber, DateOnly reservationDateStart, DateOnly reservationDateStop, int roomNumber, string customerName, string paymentConfirmation)
     {
         ReservationNumber = reservationNumber;
         ReservationDateStart = reservationDateStart;
@@ -20,11 +19,10 @@ public class Reservation
         RoomNumber = roomNumber;
         CustomerName = customerName;
         PaymentConfirmation = paymentConfirmation;
-        AmountPayed = amountPayed;
     }
     public override string ToString()
     {
-        return $"{ReservationNumber},{ReservationDateStart},{ReservationDateStop},{RoomNumber},{CustomerName},{PaymentConfirmation},{AmountPayed}";
+        return $"{ReservationNumber},{ReservationDateStart},{ReservationDateStop},{RoomNumber},{CustomerName},{PaymentConfirmation}";
     }
     public void Display()
     {
@@ -35,7 +33,6 @@ public class Reservation
         Console.WriteLine($"- Room Number: {RoomNumber}");
         Console.WriteLine($"- Guest Name: {CustomerName.ToUpper()}");
         Console.WriteLine($"- Confirmation Code: {PaymentConfirmation}");
-        Console.WriteLine($"- Amount Paid: {AmountPayed}");
     }
 }
 
