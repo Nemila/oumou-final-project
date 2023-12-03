@@ -64,7 +64,6 @@ public static class ReadFiles
         foreach (string line in lines)
         {
             string[] parts = line.Split(",");
-            Console.WriteLine(line);
             int roomNumber = Convert.ToInt32(parts[0]);
             string type = parts[1];
             _ = Enum.TryParse(type, out RoomType roomType);
