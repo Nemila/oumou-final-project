@@ -10,3 +10,4 @@
 123,Suite
 650,Double
 250,Double
+145,Single

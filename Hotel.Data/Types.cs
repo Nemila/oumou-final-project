@@ -51,7 +51,7 @@ public class Customer
 
     public override string ToString()
     {
-        return $"{RoomNumber},{Name},{Discount}#";
+        return $"{RoomNumber},{Name},{Discount}";
     }
 }
 
@@ -68,7 +68,7 @@ public class Coupon
 
     public override string ToString()
     {
-        return $"{Code},{Discount}#";
+        return $"{Code},{Discount}";
     }
 
     public void Display()
@@ -90,7 +90,7 @@ public class CouponRedemption
 
     public override string ToString()
     {
-        return $"{Code},{ReservationNumber}#";
+        return $"{Code},{ReservationNumber}";
     }
 }
 
@@ -107,7 +107,7 @@ public class RoomPrice
 
     public override string ToString()
     {
-        return $"{Type},{DailyRate}#";
+        return $"{Type},{DailyRate}";
     }
 
     public void Display()
@@ -129,7 +129,7 @@ public class Room
 
     public override string ToString()
     {
-        return $"{Number},{Type}#";
+        return $"{Number},{Type}";
     }
 
     public void Display()

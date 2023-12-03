@@ -5,13 +5,14 @@ public static class ReadFiles
     public static List<Customer> ReadCustomers()
     {
         List<Customer> customers = new();
-        string data = File.ReadAllText(FindFile("Customer.txt"));
+        var lines = File.ReadAllLines(FindFile("Customer.txt"));
 
-        foreach (string line in data.Split("#", StringSplitOptions.RemoveEmptyEntries))
+        foreach (string line in lines)
         {
-            int roomNumber = Convert.ToInt32(line.Split(",")[0].Trim());
-            string name = line.Split(",")[1].Trim();
-            double discount = Convert.ToDouble(line.Split(",")[2].Trim());
+            string[] parts = line.Split(',');
+            int roomNumber = Convert.ToInt32(parts[0]);
+            string name = parts[1];
+            double discount = Convert.ToDouble(parts[2]);
 
             Customer newCustomer = new(name, roomNumber, discount);
             customers.Add(newCustomer);
@@ -22,13 +23,13 @@ public static class ReadFiles
     public static List<Coupon> ReadCoupons()
     {
         List<Coupon> coupons = new();
-        string data = File.ReadAllText(FindFile("Coupons.txt"));
+        var lines = File.ReadAllLines(FindFile("Coupons.txt"));
 
-        foreach (string line in data.Split("#", StringSplitOptions.RemoveEmptyEntries))
+        foreach (string line in lines)
         {
-            string code = line.Split(",")[0].Trim();
-            double discount = Convert.ToDouble(line.Split(",")[1].Trim());
-
+            string[] parts = line.Split(',');
+            string code = parts[0];
+            double discount = Convert.ToDouble(parts[1]);
             Coupon newCoupon = new(code, discount);
             coupons.Add(newCoupon);
         }
@@ -39,12 +40,13 @@ public static class ReadFiles
     public static List<RoomPrice> ReadRoomPrices()
     {
         List<RoomPrice> roomPrices = new();
-        string data = File.ReadAllText(FindFile("Roomprices.txt"));
+        var lines = File.ReadAllLines(FindFile("Roomprices.txt"));
 
-        foreach (string line in data.Split("#", StringSplitOptions.RemoveEmptyEntries))
+        foreach (string line in lines)
         {
-            double dailyRate = Convert.ToDouble(line.Split(",")[1].Trim());
-            string type = line.Split(",")[0].Trim();
+            string[] parts = line.Split(",");
+            string type = parts[0];
+            double dailyRate = Convert.ToDouble(parts[1]);
             _ = Enum.TryParse(type, out RoomType roomType);
 
             RoomPrice newRoomPrice = new(roomType, dailyRate);
@@ -57,12 +59,14 @@ public static class ReadFiles
     public static List<Room> ReadRooms()
     {
         List<Room> rooms = new();
-        string data = File.ReadAllText(FindFile("Rooms.txt"));
+        var lines = File.ReadAllLines(FindFile("Rooms.txt"));
 
-        foreach (string line in data.Split("#", StringSplitOptions.RemoveEmptyEntries))
+        foreach (string line in lines)
         {
-            int roomNumber = Convert.ToInt32(line.Split(",")[0].Trim());
-            string type = line.Split(",")[1].Trim();
+            string[] parts = line.Split(",");
+            Console.WriteLine(line);
+            int roomNumber = Convert.ToInt32(parts[0]);
+            string type = parts[1];
             _ = Enum.TryParse(type, out RoomType roomType);
 
             Room newRoom = new(roomNumber, roomType);
@@ -75,25 +79,24 @@ public static class ReadFiles
     public static List<Reservation> ReadReservations()
     {
         List<Reservation> reservations = new();
-        string data = File.ReadAllText(FindFile("Reservation.txt"));
+        var lines = File.ReadAllLines(FindFile("Reservation.txt"));
 
-        foreach (string line in data.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+        foreach (string line in lines)
         {
-            string reservationNumber = line.Split(",")[0].Trim();
-            string dateStartString = line.Split(",")[1].Trim();
-            string dateStopString = line.Split(",")[2].Trim();
-            int roomNumber = Convert.ToInt32(line.Split(",")[3].Trim());
-            string customerName = line.Split(",")[4].Trim();
-            string paymentConfirmation = line.Split(",")[5].Trim();
+            string[] parts = line.Split(",");
+            string reservationNumber = parts[0];
+            string dateStartString = parts[1];
+            string dateStopString = parts[2];
+            int roomNumber = Convert.ToInt32(parts[3]);
+            string customerName = parts[4];
+            string paymentConfirmation = parts[5];
 
             _ = DateOnly.TryParse(dateStartString, out DateOnly reservationDateStart);
             _ = DateOnly.TryParse(dateStopString, out DateOnly reservationDateStop);
             _ = Guid.TryParse(reservationNumber, out Guid formattedGuid);
 
             Reservation newReservation = new(formattedGuid, reservationDateStart, reservationDateStop, roomNumber, customerName, paymentConfirmation);
-
             reservations.Add(newReservation);
-            
         }
 
         return reservations;
